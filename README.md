@@ -65,7 +65,7 @@ The `IShellLink` COM class allows extra properties to be set through an `IProper
 
 ### Blizzbar Helper
 
-Tho helper process's main purpose is to install the hook function in `BlizzbarHooks.dll`. The process needs to stay alive for the hook to remain in effect. There is both a 32-bit and a 64-bit version of the helper so hooks can be installed in both types of processes. The 32-bit version launches the 64-bit version automatically and ties their lifetimes together.
+The helper process's main purpose is to install the hook function in `BlizzbarHooks.dll`. The process needs to stay alive for the hook to remain in effect. There is both a 32-bit and a 64-bit version of the helper so hooks can be installed in both types of processes. The 32-bit version launches the 64-bit version automatically and ties their lifetimes together.
 
 ### Blizzbar Hook
 
