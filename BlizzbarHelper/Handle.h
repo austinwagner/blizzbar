@@ -5,8 +5,6 @@
 
 #include <functional>
 
-#include <sstream>
-
 template <typename NativeHandle, typename Deleter>
 class Handle
 {
