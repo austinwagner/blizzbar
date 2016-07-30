@@ -3,9 +3,7 @@
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <Windows.h>
 #include <shellapi.h>
 #include <objbase.h>
 #include <ShObjIdl.h>
@@ -17,39 +15,18 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #include <memory>
 #include <fstream>
 #include <locale>
-#include <limits>
 #include <functional>
 #include <unordered_map>
+#include <cassert>
 
 #include "Resource.h"
 #include "Handle.h"
 #include "numeric_cast.h"
-#include "NotifyIcon.h"
-#include "WindowClass.h"
+#include "NotifyIconWindow.h"
+#include "Strings.h"
 #include "../BlizzbarCommon.h"
 
 namespace fs = std::experimental::filesystem;
-
-const UINT NotifyIconCallbackMessage = WM_USER + 1;
-
-#define APP_NAME L"BlizzbarHelper"
-#define APP_FRIENDLY_NAME L"Blizzbar Helper"
-
-#define CONFIG_FILE_NAME L"games.txt"
-
-#define SURROGATE_EXE APP_NAME L"64.exe"
-
-#define DLL_NAME L"BlizzbarHooks" BIT_MODIFIER L".dll"
-
-#define MUTEX_PREFIX L"net.austinwagner.blizzbar."
-
-#define X64_MUTEX_NAME MUTEX_PREFIX L"sync_exit"
-
-#define SINGLE_INSTANCE_MUTEX_NAME MUTEX_PREFIX L"single." BIT_MODIFIER
-
-// Globals for WndProc
-static HINSTANCE g_instance;
-static Window* g_messageWindow;
 
 std::wifstream OpenConfigFile(const fs::path& path)
 {
@@ -137,65 +114,11 @@ std::pair<FileMapping, FileMappingView> MapConfigFile(const fs::path& configDir)
 		0,
 		mmapSize);
 
-	Config* config = reinterpret_cast<Config*>(view.get());
+	Config* config = view.as<Config>();
 	config->elemCount = gameInfoVec.size();
 	std::memcpy(config->gameInfoArr, gameInfoVec.data(), mmapGameInfoSize);
 
 	return std::make_pair(std::move(mmap), std::move(view));
-}
-
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	switch (message)
-	{
-	case WM_COMMAND:
-	{
-		int wmId = LOWORD(wParam);
-		switch (wmId)
-		{
-		case IDM_EXIT:
-			PostQuitMessage(0);
-			break;
-		default:
-			return DefWindowProcW(hWnd, message, wParam, lParam);
-		}
-	}
-	break;
-	case NotifyIconCallbackMessage:
-	{
-		switch (LOWORD(lParam))
-		{
-		case WM_CONTEXTMENU:
-		{
-			POINT cursorPos;
-			GetCursorPos(&cursorPos);
-
-			HMENU menu = LoadMenuW(g_instance, MAKEINTRESOURCEW(IDC_BLIZZBARHELPER));
-			HMENU subMenu = GetSubMenu(menu, 0);
-
-			UINT menuAlignment =
-				GetSystemMetrics(SM_MENUDROPALIGNMENT) == 0 ?
-				TPM_LEFTALIGN :
-				TPM_RIGHTALIGN;
-
-			// SetForegroundWindow and PostMessage are needed to prevent the context menu from getting stuck
-			SetForegroundWindow(*g_messageWindow);
-			TrackPopupMenu(subMenu, menuAlignment | TPM_BOTTOMALIGN, cursorPos.x, cursorPos.y, 0, hWnd, nullptr);
-			PostMessageW(*g_messageWindow, WM_NULL, 0, 0);
-
-			DestroyMenu(menu);
-		}
-		break;
-		default:
-			return DefWindowProcW(hWnd, message, wParam, lParam);
-		}
-	}
-	break;
-	default:
-		return DefWindowProcW(hWnd, message, wParam, lParam);
-
-	}
-	return 0;
 }
 
 Hook RegisterHook()
@@ -298,13 +221,15 @@ struct CloseHandleDeleter
 
 struct EnumWindowsCallbackParam
 {
-	std::unordered_map<DWORD, GameInfo*> checkedProcesses;
-	Config* config;
+	std::unordered_map<DWORD, const GameInfo*> checkedProcesses;
+	const Config* config;
 };
 
 BOOL CALLBACK EnumWindowsCallback(HWND hwnd, LPARAM lParam)
 {
 	EnumWindowsCallbackParam* param = reinterpret_cast<EnumWindowsCallbackParam*>(lParam);
+	assert(param != nullptr && "EnumWindowsCallback missing EnumWindowsCallbackParam");
+
 	DWORD pid;
 	GetWindowThreadProcessId(hwnd, &pid);
 
@@ -331,7 +256,7 @@ BOOL CALLBACK EnumWindowsCallback(HWND hwnd, LPARAM lParam)
 
 	for (size_t i = 0; i < param->config->elemCount; ++i)
 	{
-		GameInfo* gameInfo = &param->config->gameInfoArr[i];
+		auto gameInfo = &param->config->gameInfoArr[i];
 		if (_wcsicmp(exeName.c_str(), gameInfo->exe32) == 0 || _wcsicmp(exeName.c_str(), gameInfo->exe64) == 0)
 		{
 			SetWindowAppId(hwnd, gameInfo->appUserModelId);
@@ -344,49 +269,33 @@ BOOL CALLBACK EnumWindowsCallback(HWND hwnd, LPARAM lParam)
 	return TRUE;
 }
 
-void PlatformMain(const fs::path& exeDir, FileMappingView& view)
+void ChangeExistingWindowsAppIds(const Config* config)
 {
-#ifdef _WIN64
-	UNREFERENCED_PARAMETER(exeDir);
-	UNREFERENCED_PARAMETER(view);
+	EnumWindowsCallbackParam param;
+	param.config = config;
+	EnumWindows(EnumWindowsCallback, reinterpret_cast<LPARAM>(&param));
+}
 
+void Main(HINSTANCE instance)
+{
+	auto exeDir = GetExeDir();
+	auto mmapAndView = MapConfigFile(exeDir);
+
+#ifdef _WIN64
 	auto hook = RegisterHook();
 
 	auto mutex = Mutex::open(SYNCHRONIZE, false, X64_MUTEX_NAME);
 	mutex.wait(INFINITE);
 #else
-	WindowClass windowClass(g_instance, WndProc, L"BlizzbarHidden");
-
-	Window window(
-		0, windowClass.className().c_str(), APP_NAME, 0,
-		0, 0, 0, 0, HWND_MESSAGE, nullptr, g_instance, nullptr);
-
-	g_messageWindow = &window;
-
-	NotifyIcon notifyIcon(
-		window,
-		NotifyIconCallbackMessage,
-		LoadIconW(g_instance, MAKEINTRESOURCEW(IDI_BLIZZBAR)),
-		APP_FRIENDLY_NAME);
-
 	auto mutex = Mutex::create(nullptr, true, X64_MUTEX_NAME);
-
 	StartSurrogateProcess(exeDir);
 
 	auto hook = RegisterHook();
 
-	{
-		EnumWindowsCallbackParam param;
-		param.config = reinterpret_cast<Config*>(view.get());
-		EnumWindows(EnumWindowsCallback, reinterpret_cast<LPARAM>(&param));
-	}
+	ChangeExistingWindowsAppIds(mmapAndView.second.as<Config>());
 
-	MSG msg;
-	while (GetMessageW(&msg, nullptr, 0, 0))
-	{
-		TranslateMessage(&msg);
-		DispatchMessageW(&msg);
-	}
+	NotifyIconWindow window(instance);
+	window.runMessageLoop();
 #endif
 }
 
@@ -400,11 +309,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int)
 			return 1;
 		}
 
-		g_instance = instance;
-
-		auto exeDir = GetExeDir();
-		auto mmapAndView = MapConfigFile(exeDir);
-		PlatformMain(exeDir, mmapAndView.second);
+		Main(instance);
 
 		return 0;
 	}

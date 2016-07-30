@@ -1,6 +1,4 @@
 #pragma once
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
 #include <Windows.h>
 
 #include "Win32Exception.h"
@@ -125,6 +123,18 @@ struct FileMappingViewDeleter
 struct FileMappingView : public Handle<void*, FileMappingViewDeleter>
 {
 	FileMappingView(HANDLE fileMapping, DWORD access, DWORD offset, size_t length);
+
+	template<typename T>
+	const T* as() const
+	{
+		return reinterpret_cast<const T*>(get());
+	}
+
+	template<typename T>
+	T* as()
+	{
+		return reinterpret_cast<T*>(get());
+	}
 };
 
 

@@ -33,6 +33,12 @@
     <ClInclude Include="WindowClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="NotifyIconWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Strings.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BlizzbarHelper.cpp">
@@ -48,6 +54,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Handle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NotifyIconWindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
