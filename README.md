@@ -11,6 +11,8 @@ Simply download the zip archive from the Github Releases page and extract where 
 
 ## Usage
 
+![Example Usage Demo](http://imgur.com/ZsdPZNw.gif "Example Usage Demo")
+
 Blizzbar requires that the shortcut files are in a specific format, so you need to use the `Blizzbar.exe` GUI application to create the shortcuts.
 
 The first time you run the application, you'll want to press the button labelled `Register Helper to Run at Startup`. If the helper process isn't running, then the game will split off into another icon when launched.
@@ -20,6 +22,8 @@ To create a shortcut, select the name of the game you'd like to create a shortcu
 Clicking `Create Link` will create the shortcut in the specified folder. Windows does not allow applications to pin themselves to the taskbar, so by default this will be your desktop.
 
 From here, all you need to do is drag the shortcut onto the taskbar and delete the one that was placed on your desktop.
+
+![End Rusult](http://imgur.com/XpOwTJc.png "End Rusult")
 
 ### Other Notes
 
@@ -65,7 +69,7 @@ The `IShellLink` COM class allows extra properties to be set through an `IProper
 
 ### Blizzbar Helper
 
-Tho helper process's main purpose is to install the hook function in `BlizzbarHooks.dll`. The process needs to stay alive for the hook to remain in effect. There is both a 32-bit and a 64-bit version of the helper so hooks can be installed in both types of processes. The 32-bit version launches the 64-bit version automatically and ties their lifetimes together.
+The helper process's main purpose is to install the hook function in `BlizzbarHooks.dll`. The process needs to stay alive for the hook to remain in effect. There is both a 32-bit and a 64-bit version of the helper so hooks can be installed in both types of processes. The 32-bit version launches the 64-bit version automatically and ties their lifetimes together.
 
 ### Blizzbar Hook
 
