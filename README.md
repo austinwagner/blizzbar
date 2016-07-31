@@ -11,6 +11,8 @@ Simply download the zip archive from the Github Releases page and extract where 
 
 ## Usage
 
+![Example Usage Demo](http://imgur.com/ZsdPZNw.gif "Example Usage Demo")
+
 Blizzbar requires that the shortcut files are in a specific format, so you need to use the `Blizzbar.exe` GUI application to create the shortcuts.
 
 The first time you run the application, you'll want to press the button labelled `Register Helper to Run at Startup`. If the helper process isn't running, then the game will split off into another icon when launched.
@@ -20,6 +22,8 @@ To create a shortcut, select the name of the game you'd like to create a shortcu
 Clicking `Create Link` will create the shortcut in the specified folder. Windows does not allow applications to pin themselves to the taskbar, so by default this will be your desktop.
 
 From here, all you need to do is drag the shortcut onto the taskbar and delete the one that was placed on your desktop.
+
+![End Rusult](http://imgur.com/XpOwTJc.png "End Rusult")
 
 ### Other Notes
 
