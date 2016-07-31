@@ -172,17 +172,14 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\Visual Studio 15\Projects\Blizzbar\BlizzbarHelper\Resource.h" />
     <ClInclude Include="Handle.h" />
     <ClInclude Include="NotifyIcon.h" />
     <ClInclude Include="NotifyIconWindow.h" />
     <ClInclude Include="numeric_cast.h" />
+    <ClInclude Include="Resource.h" />
     <ClInclude Include="Strings.h" />
     <ClInclude Include="Win32Exception.h" />
     <ClInclude Include="WindowClass.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="..\..\..\..\Visual Studio 15\Projects\Blizzbar\BlizzbarHelper\Resource.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BlizzbarHelper.cpp" />
@@ -191,6 +188,12 @@
     <ClCompile Include="NotifyIconWindow.cpp" />
     <ClCompile Include="Win32Exception.cpp" />
     <ClCompile Include="WindowClass.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Blizzbar.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

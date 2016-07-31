@@ -282,6 +282,7 @@ void Main(HINSTANCE instance)
 	auto mmapAndView = MapConfigFile(exeDir);
 
 #ifdef _WIN64
+	UNREFERENCED_PARAMETER(instance);
 	auto hook = RegisterHook();
 
 	auto mutex = Mutex::open(SYNCHRONIZE, false, X64_MUTEX_NAME);
