@@ -1,8 +1,5 @@
 #pragma once
 #include <Windows.h>
-
-#include "Win32Exception.h"
-
 #include <functional>
 
 template <typename NativeHandle, typename Deleter>
@@ -19,7 +16,7 @@ public:
 	{
 	}
 
-	~Handle()
+	virtual ~Handle()
 	{
 		if (!empty())
 		{
@@ -62,45 +59,19 @@ public:
 	Handle(const Handle&) = delete;
 	Handle& operator=(const Handle&) = delete;
 
-private:
+protected:
 	NativeHandle m_handle;
 };
 
-
-struct HookDeleter
+struct GenericHandleDeleter
 {
-	void operator()(HHOOK h) const;
+	void operator()(HANDLE h) const;
 };
 
-struct Hook : public Handle<HHOOK, HookDeleter>
+struct GenericHandle : public Handle<HANDLE, GenericHandleDeleter>
 {
-	Hook(int hookId, HOOKPROC hookProc, HINSTANCE hookModule, DWORD threadId);
+	explicit GenericHandle(HANDLE h);
 };
-
-
-struct WindowDeleter
-{
-	void operator()(HWND h) const;
-};
-
-struct Window : public Handle<HWND, WindowDeleter>
-{
-	Window(DWORD extendedStyle, const std::wstring& className, const std::wstring& windowName, 
-		DWORD style, int x, int y, int width, int height, HWND parent, HMENU menu, 
-		HINSTANCE module, void* param);
-};
-
-
-struct LibraryDeleter
-{
-	void operator()(HINSTANCE h) const;
-};
-
-struct Library : public Handle<HINSTANCE, LibraryDeleter>
-{
-	Library(const std::wstring& dllName);
-};
-
 
 struct FileMappingDeleter
 {
@@ -131,10 +102,9 @@ struct FileMappingView : public Handle<void*, FileMappingViewDeleter>
 	template<typename T>
 	T* as()
 	{
-		return reinterpret_cast<T*>(get());
+		return static_cast<T*>(get());
 	}
 };
-
 
 struct MutexDeleter
 {
@@ -146,8 +116,15 @@ struct Mutex : public Handle<HANDLE, MutexDeleter>
 	static Mutex open(DWORD access, bool inherit, const std::wstring& name);
 	static Mutex create(LPSECURITY_ATTRIBUTES attrs, bool initialOwner, const std::wstring& name);
 
-	void wait(DWORD timeout) const;
+	~Mutex();
+
+	Mutex acquire() const;
+
+	Mutex(Mutex&&) = default;
+	Mutex& operator=(Mutex&&) = default;
 
 private:
-	Mutex(HANDLE h);
+	Mutex(HANDLE h, bool isOwner);
+
+	bool isOwner_;
 };

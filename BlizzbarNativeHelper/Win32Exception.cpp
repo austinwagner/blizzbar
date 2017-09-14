@@ -1,9 +1,6 @@
-#include <Windows.h>
-
 #include "Win32Exception.h"
 
-#include <locale>
-#include <codecvt>
+#include "Util.h"
 
 Win32Exception::Win32Exception() 
 { 
@@ -32,8 +29,7 @@ void Win32Exception::initMessage(const std::string& detail)
 	std::wstring errorMessageWide(errorMessageBuffer, len);
 	LocalFree(errorMessageBuffer);
 	
-	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-	std::string errorMessage = converter.to_bytes(errorMessageWide);
+	std::string errorMessage = utf16_to_utf8(errorMessageWide);
 
 	m_message = detail.empty()
 		? errorMessage
