@@ -11,7 +11,7 @@ namespace Blizzbar.Agent
 
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
-
+    
     internal sealed class Client
     {
         private readonly HttpClient client = new HttpClient();
@@ -98,57 +98,6 @@ namespace Blizzbar.Agent
             var gameDetailsTask = games.Select(GetGameDetails);
             var gameDetails = await Task.WhenAll(gameDetailsTask);
             return gameDetails.ToList();
-        }
-
-        public async Task<string> GetInstallPath(GameInfo gameInfo)
-        {
-            try
-            {
-                if (!this.authenticated)
-                {
-                    await this.Authenticate();
-                }
-
-                if (!this.authenticated)
-                {
-                    return string.Empty;
-                }
-
-                string gameKey;
-                var resp = await this.client.GetAsync("game");
-                using (var streamReader = new StreamReader(await resp.Content.ReadAsStreamAsync()))
-                using (var jsonReader = new JsonTextReader(streamReader))
-                {
-                    var respObj = this.serializer.Deserialize<JObject>(jsonReader);
-                    var gameJObject = respObj.AsJEnumerable()
-                        .FirstOrDefault(x => x.Path.StartsWith(gameInfo.AgentName, StringComparison.OrdinalIgnoreCase));
-                    if (gameJObject == null)
-                    {
-                        return string.Empty;
-                    }
-
-                    gameKey = gameJObject.Path;
-                }
-
-                resp = await this.client.GetAsync("game/" + gameKey);
-                using (var streamReader = new StreamReader(await resp.Content.ReadAsStreamAsync()))
-                using (var jsonReader = new JsonTextReader(streamReader))
-                {
-                    var respObj = this.serializer.Deserialize<JObject>(jsonReader);
-                    JToken installDir;
-                    if (!respObj.TryGetValue("install_dir", out installDir))
-                    {
-                        return string.Empty;
-                    }
-
-                    return Path.Combine(Path.GetFullPath(installDir.Value<string>()), gameInfo.LauncherExe + ".exe");
-                }
-            }
-            catch (HttpRequestException)
-            {
-                this.authenticated = false;
-                return string.Empty;
-            }
         }
     }
 }

@@ -10,61 +10,50 @@
 #define LFUNC_NAME ELLIFY(FUNC_NAME)
 #define TITLE L"Blizzbar 64-bit Surrogate"
 
-inline void ErrorMessage(LPCWSTR message)
-{
+inline void ErrorMessage(LPCWSTR message) {
 	MessageBoxW(NULL, message, TITLE, MB_OK | MB_ICONERROR);
 }
 
-void main()
-{
+void main() {
 	UINT exitCode = 1;
 
 	const HANDLE singleInstMutex = CreateMutexW(NULL, FALSE, L"Local\\" APP_GUID L".surrogate_single_instance");
-	if (!singleInstMutex)
-	{
-		if (GetLastError() == ERROR_ALREADY_EXISTS)
-		{
+	if (!singleInstMutex) {
+		if (GetLastError() == ERROR_ALREADY_EXISTS) {
 			exitCode = 2;
-		}
-		else
-		{
+		} else {
 			ErrorMessage(L"Failed to ensure single instance.");
 		}
-
+		
 		goto cleanup0;
 	}
 
 	const HANDLE barrier = OpenMutexW(GENERIC_READ, FALSE, L"Local\\" APP_GUID L".surrogate_barrier");
-	if (!barrier)
-	{
+	if (!barrier) {
 		ErrorMessage(L"Failed to open surrogate barrier mutex.");
 		goto cleanup1;
 	}
 
 	const HMODULE lib = LoadLibraryW(DLL_NAME);
-	if (!lib)
-	{
+	if (!lib) {
 		ErrorMessage(L"Could not find " DLL_NAME L".");
 		goto cleanup2;
 	}
 
 	const HOOKPROC hookProc = (HOOKPROC)GetProcAddress(lib, FUNC_NAME);
-	if (!hookProc)
-	{
+	if (!hookProc) {
 		FreeLibrary(lib);
 		ErrorMessage(L"Could not find method " LFUNC_NAME L" in " DLL_NAME L".");
 		goto cleanup3;
 	}
 
 	const HHOOK hook = SetWindowsHookW(WH_SHELL, hookProc);
-	if (!hook)
-	{
+	if (!hook) {
 		ErrorMessage(L"Failed to install Windows hook.");
 		goto cleanup3;
 	}
 
-	if (WaitForSingleObject(barrier, INFINITE) != WAIT_OBJECT_0)
-	{
+	if (WaitForSingleObject(barrier, INFINITE) != WAIT_OBJECT_0) {
 		ErrorMessage(L"Process exited unexpectedly.");
 		goto cleanup4;
 	}

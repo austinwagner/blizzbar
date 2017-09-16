@@ -16,5 +16,10 @@ namespace Blizzbar.Agent
             Name = name;
             Uri = uri;
         }
+
+        public override string ToString()
+        {
+            return $"{{Name={Name}, Uri={Uri}}}";
+        }
     }
 }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Blizzbar.Agent
+namespace Blizzbar
 {
     internal sealed class GameDetails
     {
@@ -17,6 +17,11 @@ namespace Blizzbar.Agent
             Exe32 = exe32;
             Exe64 = exe64;
             ShortName = shortName;
+        }
+
+        public override string ToString()
+        {
+            return $"{{Exe32={Exe32}, Exe64={Exe64}, ShortName={ShortName}}}";
         }
     }
 }
