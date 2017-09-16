@@ -3,11 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.15
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BlizzbarHooks", "BlizzbarHooks\BlizzbarHooks.vcxproj", "{591FC0B9-4FD2-4096-8793-A3F342D214C8}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BlizzbarHooks32", "BlizzbarHooks\BlizzbarHooks32.vcxproj", "{591FC0B9-4FD2-4096-8793-A3F342D214C8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Blizzbar", "Blizzbar\Blizzbar.csproj", "{2CA18CF7-A604-473C-9A89-36266E53AAB4}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BlizzbarSurrogate", "BlizzbarSurrogate\BlizzbarSurrogate.vcxproj", "{C5F61065-CE9A-420E-B9DC-D6AFF09327E4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BlizzbarHooks64", "BlizzbarHooks\BlizzbarHooks64.vcxproj", "{2CAFDFA4-60F3-4621-9B3A-28AB40898FCC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,26 +19,34 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{591FC0B9-4FD2-4096-8793-A3F342D214C8}.Debug|x64.ActiveCfg = Debug|x64
-		{591FC0B9-4FD2-4096-8793-A3F342D214C8}.Debug|x64.Build.0 = Debug|x64
+		{591FC0B9-4FD2-4096-8793-A3F342D214C8}.Debug|x64.ActiveCfg = Debug|Win32
 		{591FC0B9-4FD2-4096-8793-A3F342D214C8}.Debug|x86.ActiveCfg = Debug|Win32
 		{591FC0B9-4FD2-4096-8793-A3F342D214C8}.Debug|x86.Build.0 = Debug|Win32
-		{591FC0B9-4FD2-4096-8793-A3F342D214C8}.Release|x64.ActiveCfg = Release|x64
-		{591FC0B9-4FD2-4096-8793-A3F342D214C8}.Release|x64.Build.0 = Release|x64
+		{591FC0B9-4FD2-4096-8793-A3F342D214C8}.Release|x64.ActiveCfg = Release|Win32
 		{591FC0B9-4FD2-4096-8793-A3F342D214C8}.Release|x86.ActiveCfg = Release|Win32
 		{591FC0B9-4FD2-4096-8793-A3F342D214C8}.Release|x86.Build.0 = Release|Win32
-		{2CA18CF7-A604-473C-9A89-36266E53AAB4}.Debug|x64.ActiveCfg = Debug|x86
+		{2CA18CF7-A604-473C-9A89-36266E53AAB4}.Debug|x64.ActiveCfg = Debug|x64
+		{2CA18CF7-A604-473C-9A89-36266E53AAB4}.Debug|x64.Build.0 = Debug|x64
 		{2CA18CF7-A604-473C-9A89-36266E53AAB4}.Debug|x86.ActiveCfg = Debug|x86
 		{2CA18CF7-A604-473C-9A89-36266E53AAB4}.Debug|x86.Build.0 = Debug|x86
-		{2CA18CF7-A604-473C-9A89-36266E53AAB4}.Release|x64.ActiveCfg = Release|x86
+		{2CA18CF7-A604-473C-9A89-36266E53AAB4}.Release|x64.ActiveCfg = Release|x64
+		{2CA18CF7-A604-473C-9A89-36266E53AAB4}.Release|x64.Build.0 = Release|x64
 		{2CA18CF7-A604-473C-9A89-36266E53AAB4}.Release|x86.ActiveCfg = Release|x86
 		{2CA18CF7-A604-473C-9A89-36266E53AAB4}.Release|x86.Build.0 = Release|x86
 		{C5F61065-CE9A-420E-B9DC-D6AFF09327E4}.Debug|x64.ActiveCfg = Debug|x64
-		{C5F61065-CE9A-420E-B9DC-D6AFF09327E4}.Debug|x64.Build.0 = Debug|x64
 		{C5F61065-CE9A-420E-B9DC-D6AFF09327E4}.Debug|x86.ActiveCfg = Debug|x64
+		{C5F61065-CE9A-420E-B9DC-D6AFF09327E4}.Debug|x86.Build.0 = Debug|x64
 		{C5F61065-CE9A-420E-B9DC-D6AFF09327E4}.Release|x64.ActiveCfg = Release|x64
-		{C5F61065-CE9A-420E-B9DC-D6AFF09327E4}.Release|x64.Build.0 = Release|x64
 		{C5F61065-CE9A-420E-B9DC-D6AFF09327E4}.Release|x86.ActiveCfg = Release|x64
+		{C5F61065-CE9A-420E-B9DC-D6AFF09327E4}.Release|x86.Build.0 = Release|x64
+		{2CAFDFA4-60F3-4621-9B3A-28AB40898FCC}.Debug|x64.ActiveCfg = Debug|x64
+		{2CAFDFA4-60F3-4621-9B3A-28AB40898FCC}.Debug|x64.Build.0 = Debug|x64
+		{2CAFDFA4-60F3-4621-9B3A-28AB40898FCC}.Debug|x86.ActiveCfg = Debug|x64
+		{2CAFDFA4-60F3-4621-9B3A-28AB40898FCC}.Debug|x86.Build.0 = Debug|x64
+		{2CAFDFA4-60F3-4621-9B3A-28AB40898FCC}.Release|x64.ActiveCfg = Release|x64
+		{2CAFDFA4-60F3-4621-9B3A-28AB40898FCC}.Release|x64.Build.0 = Release|x64
+		{2CAFDFA4-60F3-4621-9B3A-28AB40898FCC}.Release|x86.ActiveCfg = Release|x64
+		{2CAFDFA4-60F3-4621-9B3A-28AB40898FCC}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
