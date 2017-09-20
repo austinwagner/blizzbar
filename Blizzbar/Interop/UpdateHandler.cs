@@ -3,21 +3,22 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Blizzbar.Interop
 {
     internal class UpdateHandler : IDisposable
     {
         private const int MmapNameStartOffset = sizeof(ushort);
-        private static readonly int FullMmapNameXOffset = MmapNameStartOffset + Strings.MmapNameXOffset;
 
-        private readonly Mutex _writeLock;
+        private static readonly int FullMmapNameXOffset =
+            MmapNameStartOffset + Strings.MmapNameXOffset * sizeof(ushort);
+
         private readonly MemoryMappedFile _syncMap;
         private readonly MemoryMappedViewAccessor _syncMapView;
+
+        private readonly Mutex _writeLock;
         private MemoryMappedFile _mmap;
         private MemoryMappedViewAccessor _mmapView;
 
@@ -25,7 +26,8 @@ namespace Blizzbar.Interop
         {
             _writeLock = new Mutex(false, Strings.MmapWriteMutexName);
 
-            _syncMap = MemoryMappedFile.CreateNew(Strings.MmapSyncName, MmapNameStartOffset + Strings.MmapNameX.Length, MemoryMappedFileAccess.ReadWrite);
+            _syncMap = MemoryMappedFile.CreateNew(Strings.MmapSyncName, MmapNameStartOffset + Strings.MmapNameX.Length,
+                MemoryMappedFileAccess.ReadWrite);
             _syncMapView = _syncMap.CreateViewAccessor();
 
             _mmap = MemoryMappedFile.CreateNew(Strings.MmapName1, sizeof(uint), MemoryMappedFileAccess.ReadWrite);
@@ -38,15 +40,25 @@ namespace Blizzbar.Interop
             _mmapView.Write(0, (uint)0);
         }
 
+        public void Dispose()
+        {
+            _mmapView.Dispose();
+            _mmap.Dispose();
+            _syncMapView.Dispose();
+            _syncMap.Dispose();
+            _writeLock.Dispose();
+        }
+
         public void SetGameInfo(ICollection<GameDetails> gameInfoCollection)
         {
             try
             {
                 _writeLock.WaitOne();
 
-                var mmapGameInfoSize = (32 + 32 + 64 + 64) * gameInfoCollection.Count;
-                var mmapSize = sizeof(uint) + mmapGameInfoSize;
-                
+                var mmapSize =
+                    gameInfoCollection.Sum(x =>
+                        sizeof(ushort) + x.Regex.CStrLen() + sizeof(ushort) + x.ShortName.CStrLen()) + sizeof(ushort);
+
                 string newMmapName;
                 if (_syncMapView.ReadUInt16(FullMmapNameXOffset) == '1')
                 {
@@ -61,16 +73,15 @@ namespace Blizzbar.Interop
 
                 var newMmap = MemoryMappedFile.CreateNew(newMmapName, mmapSize, MemoryMappedFileAccess.ReadWrite);
                 var newView = newMmap.CreateViewAccessor();
-                
-                newView.Write(0, (uint)gameInfoCollection.Count);
+
+                newView.Write(0, (uint)mmapSize);
                 var offset = sizeof(uint);
                 foreach (var gi in gameInfoCollection)
                 {
-                    WriteCStr(newView, ref offset, gi.Exe32, 32);
-                    WriteCStr(newView, ref offset, gi.Exe64, 32);
-                    WriteCStr(newView, ref offset, "BlizzardEnterainment.BattleNet." + gi.ShortName, 64);
-                    WriteCStr(newView, ref offset, "battlenet://" + gi.ShortName, 64);
+                    WriteCStr(newView, ref offset, gi.Regex);
+                    WriteCStr(newView, ref offset, gi.ShortName);
                 }
+                newView.Write(offset, (ushort)0);
 
                 _mmapView.Dispose();
                 _mmap.Dispose();
@@ -84,33 +95,27 @@ namespace Blizzbar.Interop
             }
         }
 
-        public void Dispose()
+        private static void WriteCStr(UnmanagedMemoryAccessor view, ref int offset, string str)
         {
-            _mmapView.Dispose();
-            _mmap.Dispose();
-            _syncMapView.Dispose();
-            _syncMap.Dispose();
-            _writeLock.Dispose();
-        }
+            view.Write(offset, (ushort)str.Length);
+            offset += sizeof(ushort);
 
-        private static void WriteCStr(UnmanagedMemoryAccessor view, ref int offset, string str, int maxCLen)
-        {
-            var cstr = ToCStr(str, maxCLen);
+            var cstr = str.ToCStr();
             view.WriteArray(offset, cstr, 0, cstr.Length);
-            offset += maxCLen;
+            offset += cstr.Length;
         }
+    }
 
-        private static byte[] ToCStr(string str, int maxCLen)
+    internal static class Extensions
+    {
+        public static int CStrLen(this string str) => (str.Length + 1) * sizeof(ushort);
+
+        public static byte[] ToCStr(this string str)
         {
-            if (str.Length >= maxCLen)
-            {
-                throw new Exception($"'{str}' exceeds maximum length of {(maxCLen - 1):D}.");
-            }
-
-            var result = new byte[str.Length + 2];
+            var result = new byte[(str.Length + 1) * sizeof(ushort)];
             Encoding.Unicode.GetBytes(str, 0, str.Length, result, 0);
-            result[str.Length] = 0;
-            result[str.Length + 1] = 0;
+            result[result.Length - 1] = 0;
+            result[result.Length - 2] = 0;
             return result;
         }
     }

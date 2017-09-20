@@ -1,73 +1,71 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
+using Blizzbar.Agent.Responses;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Blizzbar.Agent
 {
-    using System;
-    using System.IO;
-    using System.Linq;
-    using System.Net.Http;
-    using System.Net.Http.Headers;
-    using System.Threading.Tasks;
-
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    
     internal sealed class Client
     {
-        private readonly HttpClient client = new HttpClient();
-        private readonly JsonSerializer serializer = new JsonSerializer();
+        private static readonly string[] SkipGames = {"agent", "battle.net"};
+        private readonly HttpClient _client = new HttpClient();
+        private readonly JsonSerializer _serializer = new JsonSerializer();
 
-        private bool authenticated = false;
+        private bool _authenticated;
 
-        public Client()
-        {
-            this.client.BaseAddress = new Uri("http://127.0.0.1:1120");
-        }
+        public Client() => _client.BaseAddress = new Uri("http://127.0.0.1:1120");
 
         private async Task Authenticate()
         {
-            var resp = await this.client.GetAsync("agent");
+            var resp = await _client.GetAsync("agent");
 
             using (var streamReader = new StreamReader(await resp.Content.ReadAsStreamAsync()))
             using (var jsonReader = new JsonTextReader(streamReader))
             {
-                var respObj = this.serializer.Deserialize<JObject>(jsonReader);
+                var respObj = _serializer.Deserialize<JObject>(jsonReader);
                 if (!respObj.TryGetValue("authorization", out var authorization))
                 {
                     return;
                 }
 
-                this.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(authorization.Value<string>());
+                _client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue(authorization.Value<string>());
             }
 
-            this.authenticated = true;
+            _authenticated = true;
         }
 
         private async Task<T> TryJsonRequest<T>(string uri)
         {
             try
             {
-                if (!this.authenticated)
+                if (!_authenticated)
                 {
-                    await this.Authenticate();
+                    await Authenticate();
 
-                    if (!this.authenticated)
+                    if (!_authenticated)
                     {
                         throw new AgentRequestException("Could not authenticate with agent.");
                     }
                 }
 
-                var resp = await this.client.GetAsync("game");
+                var resp = await _client.GetAsync(uri);
                 resp.EnsureSuccessStatusCode();
                 using (var streamReader = new StreamReader(await resp.Content.ReadAsStreamAsync()))
                 using (var jsonReader = new JsonTextReader(streamReader))
                 {
-                    return this.serializer.Deserialize<T>(jsonReader);
+                    return _serializer.Deserialize<T>(jsonReader);
                 }
             }
             catch (HttpRequestException ex)
             {
-                this.authenticated = false;
+                _authenticated = false;
                 throw new AgentRequestException($"Request for {uri} failed.", ex);
             }
             catch (JsonException ex)
@@ -76,20 +74,34 @@ namespace Blizzbar.Agent
             }
         }
 
-        private static readonly string[] SkipGames = {"agent", "battle.net"};
         public async Task<List<Game>> GetGames()
         {
-            var resp = await TryJsonRequest<Dictionary<string, Responses.GameLinkResponse>>("/games");
+            var resp = await TryJsonRequest<Dictionary<string, GameLinkResponse>>("/game");
             return resp.Where(x => !SkipGames.Contains(x.Key)).Select(x => new Game(x.Key, x.Value.Link)).ToList();
         }
 
-        public async Task<GameDetails> GetGameDetails(Game game)
+        public async Task<List<GameDetails>> GetGameDetails(Game game)
         {
-            var resp = await TryJsonRequest<Responses.GameDetailsResponse>(game.Uri);
-            return new GameDetails(
-                resp.Binaries.Game.RelativePath ?? string.Empty,
-                resp.Binaries.Game.RelativePath64 ?? string.Empty,
-                resp.Product);
+            var resp = await TryJsonRequest<GameDetailsResponse>(game.Uri);
+            var result = new List<GameDetails>();
+            if (!string.IsNullOrEmpty(resp.Binaries.Game.Regex))
+            {
+                result.Add(GameDetails.FromRegex(resp.InstallDir, resp.Binaries.Game.Regex, game.LaunchName));
+            }
+
+            if (!string.IsNullOrEmpty(resp.Binaries.Game.RelativePath))
+            {
+                result.Add(
+                    GameDetails.FromExecutable(resp.InstallDir, resp.Binaries.Game.RelativePath, game.LaunchName));
+            }
+
+            if (!string.IsNullOrEmpty(resp.Binaries.Game.RelativePath64))
+            {
+                result.Add(GameDetails.FromExecutable(resp.InstallDir, resp.Binaries.Game.RelativePath64,
+                    game.LaunchName));
+            }
+
+            return result;
         }
 
         public async Task<List<GameDetails>> GetAllGameDetails()
@@ -97,7 +109,7 @@ namespace Blizzbar.Agent
             var games = await GetGames();
             var gameDetailsTask = games.Select(GetGameDetails);
             var gameDetails = await Task.WhenAll(gameDetailsTask);
-            return gameDetails.ToList();
+            return gameDetails.SelectMany(x => x).ToList();
         }
     }
 }

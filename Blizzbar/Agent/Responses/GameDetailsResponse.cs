@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace Blizzbar.Agent.Responses
 {
@@ -12,8 +7,8 @@ namespace Blizzbar.Agent.Responses
         [JsonProperty("binaries", Required = Required.Always)]
         public BinariesResponse Binaries { get; set; }
 
-        [JsonProperty("product", Required = Required.Always)]
-        public string Product { get; set; }
+        [JsonProperty("install_dir", Required = Required.Always)]
+        public string InstallDir { get; set; }
 
         public sealed class BinariesResponse
         {
@@ -22,6 +17,9 @@ namespace Blizzbar.Agent.Responses
 
             public sealed class GameResponse
             {
+                [JsonProperty("regex")]
+                public string Regex { get; set; }
+
                 [JsonProperty("relative_path")]
                 public string RelativePath { get; set; }
 

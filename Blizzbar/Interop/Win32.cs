@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Win32.SafeHandles;
 
 namespace Blizzbar.Interop
@@ -14,13 +10,17 @@ namespace Blizzbar.Interop
         public static extern bool CloseHandle(IntPtr handle);
 
         [DllImport("user32.dll", SetLastError = true)]
-        public static extern SafeHookHandle SetWindowsHookEx(HookType hookType, IntPtr hookFunc, IntPtr module, uint threadId);
+        public static extern SafeHookHandle SetWindowsHookEx(HookType hookType, IntPtr hookFunc, IntPtr module,
+            uint threadId);
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool UnhookWindowsHookEx(IntPtr hookHandle);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern SafeLibraryHandle LoadLibrary(string filename);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool FreeLibrary(IntPtr handle);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
         public static extern IntPtr GetProcAddress(IntPtr module, string funcName);
@@ -37,15 +37,19 @@ namespace Blizzbar.Interop
 
         public sealed class SafeHookHandle : SafeHandleZeroOrMinusOneIsInvalid
         {
-            private static readonly IntPtr HwndBroadcast = new IntPtr(0xFFFF);
             private const uint WmNull = 0;
+            private static readonly IntPtr HwndBroadcast = new IntPtr(0xFFFF);
+
+            public SafeHookHandle() : base(true) { }
+
+            public SafeHookHandle(bool ownsHandle) : base(ownsHandle) { }
 
             public SafeHookHandle(IntPtr preexistingHandle, bool ownsHandle)
                 : base(ownsHandle)
             {
                 SetHandle(preexistingHandle);
             }
-            
+
             protected override bool ReleaseHandle()
             {
                 UnhookWindowsHookEx(handle);
@@ -57,21 +61,19 @@ namespace Blizzbar.Interop
 
         public sealed class SafeLibraryHandle : SafeHandleZeroOrMinusOneIsInvalid
         {
+            public SafeLibraryHandle() : base(true) { }
+
+            public SafeLibraryHandle(bool ownsHandle) : base(ownsHandle) { }
+
             public SafeLibraryHandle(IntPtr preexistingHandle, bool ownsHandle)
                 : base(ownsHandle)
             {
                 SetHandle(preexistingHandle);
             }
 
-            protected override bool ReleaseHandle()
-            {
-                return CloseHandle(handle);
-            }
+            protected override bool ReleaseHandle() => FreeLibrary(handle);
 
-            public IntPtr GetFunction(string name)
-            {
-                return GetProcAddress(handle, name);
-            }
+            public IntPtr GetFunction(string name) => GetProcAddress(handle, name);
         }
     }
 }

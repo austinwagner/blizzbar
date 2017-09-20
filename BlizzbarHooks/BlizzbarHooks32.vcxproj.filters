@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BlizzbarHooks.c">
+    <ClCompile Include="BlizzbarHooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,18 +1,19 @@
 #pragma once
-#include <wchar.h>
-#include <stdint.h>
+#include <string>
+#include <array>
+#include <stdlib.h>
 
 #define DWORD_MAX 4294967295
 
-#ifdef _WIN64
-#define BIT_MODIFIER L"64"
-#else
-#define BIT_MODIFIER L"32"
-#endif
-
+//#ifdef _WIN64
+//#define BIT_MODIFIER L"64"
+//#else
+//#define BIT_MODIFIER L"32"
+//#endif
+//
 #define APP_GUID L"84fed2b1-9493-4e53-a569-9e5e5abe7da2"
 
-#define MMAP_BASE_NAME L"Local\\" APP_GUID L"." BIT_MODIFIER
+#define MMAP_BASE_NAME L"Local\\" APP_GUID
 
 #define MMAP_SYNC_NAME MMAP_BASE_NAME L".sync"
 
@@ -20,44 +21,88 @@
 
 #define MMAP_NAME_2 MMAP_BASE_NAME L".2"
 
-#define MMAP_MUTEX_BASE_NAME APP_GUID L"." BIT_MODIFIER
+#define MMAP_WRITE_MUTEX_NAME APP_GUID L".write_mutex"
 
-#define MMAP_WRITE_MUTEX_NAME MMAP_MUTEX_BASE_NAME L".write_mutex"
+#define MMAP_READ_MUTEX_NAME APP_GUID L".read_mutex"
 
-#define MMAP_READ_MUTEX_NAME MMAP_MUTEX_BASE_NAME L".read_mutex"
+//static const std::wstring AppGuid = L"84fed2b1-9493-4e53-a569-9e5e5abe7da2";
+//static const std::wstring MmapBaseName = L"Local\\" + AppGuid;
+//static const std::wstring MmapSyncName = MmapBaseName + L".sync";
+//static const std::wstring MmapName1 = MmapBaseName + L".1";
+//static const std::wstring MmapName2 = MmapBaseName + L".2";
+//static const std::wstring MmapWriteMutexName = AppGuid + L".write_mutex";
+//static const std::wstring MmapReadMutexName = AppGuid + L"read_mutex";
 
-// File format: GameName|UrlShortName|AgentShortName|LauncherExe|32BitExe|64BitExe
-// Unneeded fields are excluded. exe contains the executable for the current architecture
-// and is what the hook library uses. exeOtherArch is stored for the helper to find existing 
-// windows for either architecture.
-typedef struct tagGameInfo
+struct GameInfo
 {
-	wchar_t exe32[32];
-	wchar_t exe64[32];
-	wchar_t appUserModelId[64];
-	wchar_t relaunchCommand[64];
-} GameInfo;
+	std::array<wchar_t, 256> installPath;
+	std::array<wchar_t, 64> exeRegex;
+	std::array<wchar_t, 64> appUserModelId;
+	std::array<wchar_t, 64> relaunchCommand;
+	std::array<wchar_t, 256> iconPath;
+};
 
-typedef struct tagConfig
+struct Config
 {
-	size_t elemCount;
+	uint32_t elemCount;
 
 #pragma warning(suppress: 4200) // Doesn't matter that this is non-standard
 	GameInfo gameInfoArr[];
-} Config;
+};
 
-typedef struct tagMmapSyncData 
+struct MmapSyncData 
 {
-	int32_t numReaders;
-	wchar_t mmapName[sizeof(MMAP_NAME_1)];
-} MmapSyncData;
+	uint16_t numReaders;
+	std::array<wchar_t, _countof(MMAP_NAME_1)> mmapName;
+};
 
-#ifdef __cplusplus
-#define BBCOMMON_STATIC_ASSERT static_assert
-#else
-#define BBCOMMON_STATIC_ASSERT(COND,MSG) typedef char static_assertion[(COND)?1:-1]
-#endif
+static_assert(sizeof(MMAP_NAME_1) == sizeof(MMAP_NAME_2), "Length of memory mapped file names must be exactly equal.");
 
-BBCOMMON_STATIC_ASSERT(sizeof(MMAP_NAME_1) == sizeof(MMAP_NAME_2), "Length of memory mapped file names must be exactly equal.");
+namespace detail {
+	// https://gist.github.com/mrts/5890888
+	template <class Function>
+	class ScopeGuard
+	{
+	public:
+		ScopeGuard(Function f) :
+			_guardFunction(std::move(f)),
+			_active(true)
+		{ }
 
-#undef BBCOMMON_STATIC_ASSERT
+		~ScopeGuard() {
+			if (_active) {
+				_guardFunction();
+			}
+		}
+
+		ScopeGuard(ScopeGuard&& rhs) :
+			_guardFunction(std::move(rhs._guardFunction)),
+			_active(rhs._active) {
+			rhs.dismiss();
+		}
+
+		void dismiss() {
+			_active = false;
+		}
+
+	private:
+		Function _guardFunction;
+		bool _active;
+
+		ScopeGuard() = delete;
+		ScopeGuard(const ScopeGuard&) = delete;
+		ScopeGuard& operator=(const ScopeGuard&) = delete;
+	};
+
+	enum class ScopeGuardOnExit {};
+
+	template <typename Fun>
+	ScopeGuard<Fun> operator+(ScopeGuardOnExit, Fun&& fn) {
+		return ScopeGuard<Fun>(std::forward<Fun>(fn));
+	}
+}
+
+#define CONCATENATE_IMPL(s1, s2) s1##s2
+#define CONCATENATE(s1, s2) CONCATENATE_IMPL(s1, s2)
+#define ANONYMOUS_VARIABLE(str) CONCATENATE(str, __COUNTER__)
+#define SCOPE_EXIT auto ANONYMOUS_VARIABLE(SCOPE_EXIT_STATE) = ::detail::ScopeGuardOnExit() + [&]()

@@ -1,17 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Blizzbar.Agent;
 using Blizzbar.Interop;
 
 namespace Blizzbar
@@ -19,15 +13,17 @@ namespace Blizzbar
     public partial class NotifyIconForm : Form
     {
         // HACK: Grab this private method so the context menu can properly be shown on left click.
-        private static readonly MethodInfo ShowContextMenu = typeof(NotifyIcon).GetMethod("ShowContextMenu", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo ShowContextMenu =
+            typeof(NotifyIcon).GetMethod("ShowContextMenu", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        private readonly Agent.Client _agentClient = new Agent.Client();
+        private readonly Client _agentClient = new Client();
         private readonly UpdateHandler _updateHandler = new UpdateHandler();
-
-        private Mutex _surrogateMutex;
         private bool _exiting;
-        private Process _surrogate;
         private HookInstaller _hook;
+        private Process _surrogate;
+
+        private Mutex _surrogateBarrier;
+        private Thread _surrogateMonitor;
 
         public NotifyIconForm()
         {
@@ -81,25 +77,33 @@ namespace Blizzbar
 
             try
             {
-                _surrogateMutex = new Mutex(true, "Local\\" + Strings.AppGuid + ".surrogate_mutex");
+                _surrogateBarrier = new Mutex(true, "Local\\" + Strings.AppGuid + ".surrogate_barrier");
                 var exePath = Path.Combine(Application.StartupPath, "BlizzbarSurrogate.exe");
                 _surrogate = Process.Start(exePath);
-                Debug.Assert(_surrogate != null); // Documentation says the function won't return null when starting an exe
+                Debug.Assert(_surrogate !=
+                             null); // Documentation says the function won't return null when starting an exe
             }
             catch (Exception ex)
             {
                 throw new FatalException("Failed to start Blizzbar surrogate process.", ex);
             }
 
-            _surrogate.Exited += (sender, args) =>
+            _surrogateMonitor = new Thread(() =>
             {
+                _surrogate.WaitForExit();
+
                 if (_exiting) return;
 
-                MessageBox.Show("Blizzbar surrogate process exited unexpectedly. Shutting down main process.",
-                    "Blizzbar", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Invoke((Action)delegate
+                {
+                    MessageBox.Show("Blizzbar surrogate process exited unexpectedly. Shutting down main process.",
+                        "Blizzbar", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-                Application.Exit();
-            };
+                    Application.Exit();
+                });
+            });
+
+            _surrogateMonitor.Start();
         }
 
         private async void agentPollTimer_Tick(object sender, EventArgs e)
@@ -154,7 +158,8 @@ namespace Blizzbar
             Debug.Print("Disposing main form");
             _exiting = true;
             _updateHandler.Dispose();
-            _surrogateMutex?.Dispose();
+            _surrogateBarrier?.ReleaseMutex();
+            _surrogateBarrier?.Dispose();
             _surrogate?.Dispose();
             _hook?.Dispose();
         }

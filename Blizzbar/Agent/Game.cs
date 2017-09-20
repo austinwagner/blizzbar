@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Blizzbar.Agent
+﻿namespace Blizzbar.Agent
 {
     internal sealed class Game
     {
@@ -17,9 +11,10 @@ namespace Blizzbar.Agent
             Uri = uri;
         }
 
-        public override string ToString()
-        {
-            return $"{{Name={Name}, Uri={Uri}}}";
-        }
+        // Launch name is the URI without the leading "/game" and no trailing slash
+        // (shouldn't be one, but might as well run the replace for safety)
+        public string LaunchName => Uri.Substring(5).Replace("/", "");
+
+        public override string ToString() => $"{{Name={Name}, Uri={Uri}}}";
     }
 }

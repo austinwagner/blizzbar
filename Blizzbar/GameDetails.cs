@@ -1,27 +1,66 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace Blizzbar
 {
     internal sealed class GameDetails
     {
-        public readonly string Exe32;
-        public readonly string Exe64;
+        public readonly string Regex;
         public readonly string ShortName;
 
-        public GameDetails(string exe32, string exe64, string shortName)
+        private GameDetails(string regex, string shortName)
         {
-            Exe32 = exe32;
-            Exe64 = exe64;
+            Regex = regex;
             ShortName = shortName;
         }
 
-        public override string ToString()
+        public static GameDetails FromRegex(string installDir, string regex, string shortName) => new GameDetails(
+            EscapeStringForRegex(installDir.Replace("/", "\\")) + "\\\\" + regex.Replace("/", "\\\\"),
+            shortName);
+
+        public static GameDetails FromExecutable(string installDir, string exe, string shortName) =>
+            new GameDetails(EscapeStringForRegex(installDir.Replace("/", "\\") + "\\" + exe.Replace("/", "\\")),
+                shortName);
+
+        public override string ToString() => $"{{Regex={Regex}, ShortName={ShortName}}}";
+
+        private static string EscapeStringForRegex(string str)
         {
-            return $"{{Exe32={Exe32}, Exe64={Exe64}, ShortName={ShortName}}}";
+            var sb = new StringBuilder();
+            foreach (var c in str)
+            {
+                switch (c)
+                {
+                case '(':
+                    goto case '?';
+                case ')':
+                    goto case '?';
+                case '[':
+                    goto case '?';
+                case '{':
+                    goto case '?';
+                case '*':
+                    goto case '?';
+                case '+':
+                    goto case '?';
+                case '.':
+                    goto case '?';
+                case '$':
+                    goto case '?';
+                case '^':
+                    goto case '?';
+                case '\\':
+                    goto case '?';
+                case '|':
+                    goto case '?';
+                case '?':
+                    sb.Append('\\');
+                    break;
+                }
+
+                sb.Append(c);
+            }
+
+            return sb.ToString();
         }
     }
 }

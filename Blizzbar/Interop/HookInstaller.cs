@@ -1,18 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Win32.SafeHandles;
 
 namespace Blizzbar.Interop
 {
     internal class HookInstaller : IDisposable
     {
-        private readonly Win32.SafeLibraryHandle _lib;
         private readonly Win32.SafeHookHandle _hook;
+        private readonly Win32.SafeLibraryHandle _lib;
 
         public HookInstaller(string libName, string funcName)
         {
@@ -27,7 +22,8 @@ namespace Blizzbar.Interop
             if (procAddr == IntPtr.Zero)
             {
                 var err = Marshal.GetLastWin32Error();
-                throw new FatalException($"Unable to find function '{funcName}' in library '{libName}'.", new Win32Exception(err));
+                throw new FatalException($"Unable to find function '{funcName}' in library '{libName}'.",
+                    new Win32Exception(err));
             }
 
             _hook = Win32.SetWindowsHookEx(HookType.Shell, procAddr, _lib.DangerousGetHandle(), 0);
