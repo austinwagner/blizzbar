@@ -85,13 +85,22 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="JetBrains.Annotations, Version=11.0.0.0, Culture=neutral, PublicKeyToken=1010a0d8d6380325, processorArchitecture=MSIL">
+      <HintPath>..\packages\JetBrains.Annotations.11.0.0\lib\net20\JetBrains.Annotations.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.4.4.12\lib\net45\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable, Version=1.2.2.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Collections.Immutable.1.4.0\lib\netstandard2.0\System.Collections.Immutable.dll</HintPath>
+    </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Windows" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
@@ -111,13 +120,16 @@
     <Compile Include="Agent\Game.cs" />
     <Compile Include="Agent\Responses\GameDetailsResponse.cs" />
     <Compile Include="Agent\Responses\GameLinkResponse.cs" />
+    <Compile Include="Autostart.cs" />
     <Compile Include="FatalException.cs" />
     <Compile Include="GameDetails.cs" />
     <Compile Include="Interop\HookInstaller.cs" />
+    <Compile Include="Interop\HookManager.cs" />
     <Compile Include="Interop\HookType.cs" />
+    <Compile Include="Interop\IPropertyStore.cs" />
     <Compile Include="Interop\SendMessageTimeoutFlags.cs" />
     <Compile Include="Interop\Strings.cs" />
-    <Compile Include="Interop\UpdateHandler.cs" />
+    <Compile Include="UpdateHandler.cs" />
     <Compile Include="Interop\Win32.cs" />
     <Compile Include="NotifyIconForm.cs">
       <SubType>Form</SubType>

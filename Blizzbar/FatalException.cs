@@ -1,12 +1,14 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Text;
 using System.Windows.Forms;
+using NLog;
 
 namespace Blizzbar
 {
     internal class FatalException : Exception
     {
+        public static readonly ILogger Log = LogManager.GetCurrentClassLogger();
+
         public FatalException(string message)
             : base(message) { }
 
@@ -15,7 +17,7 @@ namespace Blizzbar
 
         public void Exit()
         {
-            Debug.Print(ToString());
+            Log.Fatal(this);
 
             var sb = new StringBuilder();
             sb.AppendLine(Message);
@@ -24,7 +26,10 @@ namespace Blizzbar
                 sb.Append("   ").AppendLine(ie.Message);
             }
             sb.AppendLine("Blizzbar will now terminate.");
-            MessageBox.Show(sb.ToString(), "Blizzbar", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            // Dummy topmost parent form prevents this message from ending up behind other windows
+            MessageBox.Show(new Form {TopMost = true}, sb.ToString(), "Blizzbar", MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
             Application.Exit();
         }
     }

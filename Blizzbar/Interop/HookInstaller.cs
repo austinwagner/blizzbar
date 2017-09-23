@@ -9,7 +9,7 @@ namespace Blizzbar.Interop
         private readonly Win32.SafeHookHandle _hook;
         private readonly Win32.SafeLibraryHandle _lib;
 
-        public HookInstaller(string libName, string funcName)
+        public HookInstaller(HookType type, string libName, string funcName)
         {
             _lib = Win32.LoadLibrary(libName);
             if (_lib.IsInvalid)
@@ -26,7 +26,7 @@ namespace Blizzbar.Interop
                     new Win32Exception(err));
             }
 
-            _hook = Win32.SetWindowsHookEx(HookType.Shell, procAddr, _lib.DangerousGetHandle(), 0);
+            _hook = Win32.SetWindowsHookEx(type, procAddr, _lib.DangerousGetHandle(), 0);
             if (_hook.IsInvalid)
             {
                 var err = Marshal.GetLastWin32Error();
