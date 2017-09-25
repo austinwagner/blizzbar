@@ -11,14 +11,16 @@ namespace Blizzbar.Interop
         private readonly HookInstaller _hook;
         private readonly SurrogateHookInstaller _surrogateHook;
 
-        public HookManager(Action surrogateFailureHandler)
+        public Action SurrogateExitHandler { get; set; }
+
+        public HookManager()
         {
             var hookLibName = $"BlizzbarHooks{(Environment.Is64BitProcess ? "64" : "32")}.dll";
             _hook = new HookInstaller(HookType.Shell, hookLibName, "ShellHookHandler");
 
             try
             {
-                _surrogateHook = new SurrogateHookInstaller(surrogateFailureHandler);
+                _surrogateHook = new SurrogateHookInstaller(this);
             }
             catch
             {
@@ -39,7 +41,7 @@ namespace Blizzbar.Interop
             private readonly Thread _monitor;
             private readonly Process _process;
 
-            public SurrogateHookInstaller(Action unexpectedExitHandler)
+            public SurrogateHookInstaller(HookManager parent)
             {
                 if (Environment.Is64BitProcess || !Environment.Is64BitOperatingSystem)
                 {
@@ -64,8 +66,13 @@ namespace Blizzbar.Interop
 
                 _monitor = new Thread(() =>
                 {
-                    _process.WaitForExit();
-                    unexpectedExitHandler();
+                    try
+                    {
+                        _process.WaitForExit();
+                    }
+                    catch (ThreadInterruptedException) { }
+
+                    parent.SurrogateExitHandler?.Invoke();
                 });
 
                 _monitor.Start();
@@ -73,7 +80,11 @@ namespace Blizzbar.Interop
 
             public void Dispose()
             {
+                // Exiting before the surrogate process starts can cause the
+                // monitor loop to never end which causes the application to never
+                // exit. Force the thread out of its waiting state to avoid that.
                 _monitor.Interrupt();
+
                 _barrier?.Dispose();
                 _process?.Dispose();
             }

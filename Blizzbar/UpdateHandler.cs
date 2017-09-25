@@ -224,7 +224,7 @@ namespace Blizzbar
             offset += cstr.Length;
         }
 
-        public IDisposable InstallHooks(Action surrogateFailureHandler) => new HookManager(surrogateFailureHandler);
+        public HookManager InstallHooks() => new HookManager();
     }
 
     internal static class Extensions

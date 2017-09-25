@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Blizzbar.Agent;
+using Blizzbar.Interop;
 using NLog;
 
 namespace Blizzbar
@@ -19,7 +20,7 @@ namespace Blizzbar
         private readonly Client _agentClient = new Client();
         private readonly UpdateHandler _updateHandler = new UpdateHandler();
         private bool _exiting;
-        private IDisposable _hooks;
+        private HookManager _hooks;
 
         public NotifyIconForm()
         {
@@ -80,7 +81,8 @@ namespace Blizzbar
             {
                 await PollAgentWithRetries();
 
-                _hooks = _updateHandler.InstallHooks(() =>
+                _hooks = _updateHandler.InstallHooks();
+                _hooks.SurrogateExitHandler = () =>
                 {
                     if (_exiting) return;
 
@@ -91,7 +93,7 @@ namespace Blizzbar
 
                         Application.Exit();
                     });
-                });
+                };
             }
             catch (FatalException ex)
             {
