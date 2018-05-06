@@ -1,0 +1,49 @@
+cmake_minimum_required(VERSION 3.8)
+
+foreach(flag_var
+        CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+        CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
+        CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+        CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
+  if(${flag_var} MATCHES "/MD")
+      string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+  endif(${flag_var} MATCHES "/MD")
+endforeach(flag_var)
+
+add_library(
+  blizzbar-hook SHARED
+  "src/blizzbar_hook.cpp"
+  "src/ConfigHelpers.h"
+  "src/ConfigHelpers.cpp"
+  "src/ThreadLocal.h"
+  "res/resource.h"
+  "res/resource.rc"
+)
+
+add_definitions(-D_UNICODE -DUNICODE -DWIN32_LEAN_AND_MEAN -DNOMINMAX)
+
+target_link_libraries(
+  blizzbar-hook
+  blizzbar-common
+  minhook
+  gsl
+)
+target_compile_features(blizzbar-hook PRIVATE cxx_std_17)
+
+if(WIN32 AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set_target_properties(blizzbar-hook PROPERTIES SUFFIX "-64.dll")
+  elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set_target_properties(blizzbar-hook PROPERTIES SUFFIX "-32.dll")
+  else()
+    message(SEND_ERROR "Target system has unsupported pointer size.")
+  endif()
+
+  set_target_properties(blizzbar-hook PROPERTIES
+                        LINK_FLAGS_RELEASE "/NODEFAULTLIB:libucrt.lib ucrt.lib"
+                        LINK_FLAGS_MINSIZEREL "/NODEFAULTLIB:libucrt.lib ucrt.lib"
+                        LINK_FLAGS_RELWITHDEBINFO "/NODEFAULTLIB:libucrt.lib ucrt.lib"
+                        LINK_FLAGS_DEBUG "/NODEFAULTLIB:libucrtd.lib ucrtd.lib")
+else()
+  message(SEND_ERROR "Only Windows and the MSVC compiler are supported.")
+endif()

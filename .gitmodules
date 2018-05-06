@@ -1,0 +1,6 @@
+[submodule "deps/gsl"]
+	path = deps/gsl
+	url = https://github.com/Microsoft/GSL.git
+[submodule "deps/minhook"]
+	path = deps/minhook
+	url = https://github.com/TsudaKageyu/minhook.git
