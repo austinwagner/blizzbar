@@ -92,8 +92,7 @@ private:
 // windows for either architecture.
 struct GameInfo
 {
-	FixedCapacityString<32> exe32;
-	FixedCapacityString<32> exe64;
+	FixedCapacityString<32> exe;
 	FixedCapacityString<64> appUserModelId;
 	FixedCapacityString<128> relaunchCommand;
 	FixedCapacityString<64> gameName;

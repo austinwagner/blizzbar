@@ -89,18 +89,22 @@ std::vector<GameInfo> ParseConfig(std::wistream& file)
 				gameInfo.appUserModelId.sprintf(APP_GUID L".%.*s", len, token);
 				gameInfo.relaunchCommand.sprintf(L"\"%s\" battlenet://%.*s", explorerExe.c_str(), len, token);
 				break;
+#ifdef _WIN64
+            case 3:
+#else
 			case 2:
-				gameInfo.exe32.sprintf(L"%.*s", len, token);
-				break;
-			case 3:
-				gameInfo.exe64.sprintf(L"%.*s", len, token);
+#endif
+				gameInfo.exe.sprintf(L"%.*s", len, token);
 				break;
 			}
 
 			token += len + 1;
 		}
 
-		result.push_back(gameInfo);
+        if (gameInfo.exe.size() > 0)
+        {
+		    result.push_back(gameInfo);
+        }
 	}
 
 	return result;

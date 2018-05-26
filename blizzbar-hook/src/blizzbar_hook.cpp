@@ -169,13 +169,7 @@ const GameInfo* LookupGameInfoByExeName(const std::wstring& exeName)
 	{
 		const auto gi = (*g_configView)[i];
 
-#ifdef _WIN64
-		auto& giExe = gi->exe64;
-#else
-		auto& giExe = gi->exe32;
-#endif
-
-		if (CompareStringIgnoreCase(exeNameNoExt, giExe))
+		if (CompareStringIgnoreCase(exeNameNoExt, gi->exe))
 		{
 			return gi;
 		}
