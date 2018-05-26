@@ -50,22 +50,25 @@ struct ComDeleter
 	void operator()(void* p) { CoTaskMemFree(p); }
 };
 
-fs::path GetSystemDir()
+fs::path GetExplorerPath()
 {
-	wchar_t* path_raw;
-	if (SHGetKnownFolderPath(FOLDERID_System, 0, nullptr, &path_raw) != S_OK)
+	wchar_t* windowsDirStr;
+	const auto res = SHGetKnownFolderPath(FOLDERID_Windows, 0, nullptr, &windowsDirStr);
+    if (res != S_OK)
 	{
-		// TODO: Pass HRESULT to Win32Exception
-		throw Win32Exception("Failed to get system folder path.");
+		throw Win32Exception(res, "Failed to get Windows directory path.");
 	}
-	// Guards against the fs::path ctor throwing
-	std::unique_ptr<wchar_t, ComDeleter> path(path_raw);
+	std::unique_ptr<wchar_t, ComDeleter> windowsDirStrGuard(windowsDirStr);
 
-	return { path.get() };
+    fs::path windowsDir{windowsDirStr};
+
+	return fs::canonical(windowsDir / "explorer.exe");
 }
 
 std::vector<GameInfo> ParseConfig(std::wistream& file)
 {
+    const auto explorerExe = GetExplorerPath().wstring();
+
 	// Pipe delimeted file parsing adapted from http://archive.is/HN3vj
 	std::vector<GameInfo> result;
 	std::wstring line;
@@ -84,7 +87,7 @@ std::vector<GameInfo> ParseConfig(std::wistream& file)
 				break;
 			case 1:
 				gameInfo.appUserModelId.sprintf(APP_GUID L".%.*s", len, token);
-				gameInfo.relaunchCommand.sprintf(L"C:\\Windows\\explorer.exe battlenet://%.*s", len, token);
+				gameInfo.relaunchCommand.sprintf(L"\"%s\" battlenet://%.*s", explorerExe.c_str(), len, token);
 				break;
 			case 2:
 				gameInfo.exe32.sprintf(L"%.*s", len, token);
