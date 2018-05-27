@@ -1,6 +1,9 @@
-Diablo III|diablo3|Diablo III|
-Hearthstone|hs|Hearthstone|
-Heroes of the Storm|heroes|HeroesOfTheStorm|HeroesOfTheStorm_x64
-Overwatch|prometheus|Overwatch|Overwatch
-Starcraft II|s2|SC2|SC2_x64
-World of Warcraft|wow||Wow-64
+Diablo III|D3|Diablo III|
+Hearthstone|WTCG|Hearthstone|
+Heroes of the Storm|Hero|HeroesOfTheStorm|HeroesOfTheStorm_x64
+Overwatch|Pro|Overwatch|Overwatch
+StarCraft II|S2|SC2|SC2_x64
+World of Warcraft|WoW||Wow-64
+StarCraft|S1|starcraft|
+Destiny 2|DST2||destiny2
+Call of Duty: Black Ops 4|VIPR||
