@@ -114,3 +114,32 @@ void Mutex::wait(DWORD timeout) const
 {
 	WaitForSingleObject(get(), timeout);
 }
+
+void RegistryKeyDeleter::operator()(HKEY h) const
+{
+    RegCloseKey(h);
+}
+
+std::optional<RegistryKey> RegistryKey::open(HKEY baseKey, const std::wstring& subKeyPath, REGSAM desiredSam)
+{
+    HKEY key;
+    const auto res = RegOpenKeyExW(baseKey, subKeyPath.c_str(), 0, desiredSam, &key);
+    return res == ERROR_SUCCESS
+        ? std::optional{RegistryKey{key}}
+        : std::nullopt;
+}
+
+RegistryKey RegistryKey::create(HKEY baseKey, const std::wstring& subKeyPath,
+    std::wstring* className, DWORD options, REGSAM desiredSam, LPSECURITY_ATTRIBUTES attrs, DWORD* disposition)
+{
+    HKEY key;
+    const auto res = RegCreateKeyExW(baseKey, subKeyPath.c_str(), 0, (className ? className->data() : nullptr),
+        options, desiredSam, attrs, &key, disposition);
+    if (res != ERROR_SUCCESS) throw Win32Exception(res, "Failed to create registry key.");
+    return RegistryKey{key};
+}
+
+RegistryKey::RegistryKey(HKEY h)
+    : Handle(h)
+{
+}

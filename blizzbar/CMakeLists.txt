@@ -27,6 +27,7 @@ add_executable(
   "res/resource.rc"
   "res/blizzbar.ico"
   "res/strings.h"
+  "res/blizzbar.exe.manifest"
 )
 
 add_definitions(-D_UNICODE -DUNICODE -DWIN32_LEAN_AND_MEAN -DNOMINMAX -D_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING)

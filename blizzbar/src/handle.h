@@ -2,6 +2,7 @@
 #include <Windows.h>
 
 #include <functional>
+#include <optional>
 
 template <typename NativeHandle, typename Deleter>
 class Handle
@@ -148,4 +149,26 @@ struct Mutex : Handle<HANDLE, MutexDeleter>
 
 private:
 	explicit Mutex(HANDLE h);
+};
+
+enum class RegKeyCreationDisposition
+{
+    CreatedNew,
+    OpenedExisting,
+};
+
+struct RegistryKeyDeleter
+{
+    void operator()(HKEY h) const;
+};
+
+struct RegistryKey : Handle<HKEY, RegistryKeyDeleter>
+{
+    static std::optional<RegistryKey> open(HKEY baseKey, const std::wstring& subKeyPath, REGSAM desiredSam);
+    static RegistryKey create(
+        HKEY baseKey, const std::wstring& subKeyPath, std::wstring* className,
+        DWORD options, REGSAM desiredSam, LPSECURITY_ATTRIBUTES attrs, DWORD* disposition);
+
+private:
+    explicit RegistryKey(HKEY h);
 };

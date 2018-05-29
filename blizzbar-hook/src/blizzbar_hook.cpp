@@ -36,9 +36,7 @@ std::wstring g_iconPath;
 HANDLE g_thread;
 bool g_hookInstalled;
 
-// ReSharper disable CppInconsistentNaming
 ThreadLocal<std::unordered_set<HWND>> tl_hwnds;
-// ReSharper restore CppInconsistentNaming
 
 
 class WindowPropStore {

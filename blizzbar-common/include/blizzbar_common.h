@@ -17,9 +17,10 @@ class FixedCapacityString {
 	// Keep in mind that N is the size of the backing array, therefore the maximum
 	// string size is N - 1.
 public:
+    static_assert(N > 0, "FixedCapacityString needs at have a size of at least 1 to hold the null terminator.");
 	using value_type = wchar_t;
 
-	FixedCapacityString() : size_{ 0 } { data_[size_] = 0; }
+	FixedCapacityString() : size_{ 0 } { data_[0] = 0; }
 
 	FixedCapacityString(const std::wstring& str)
 		: size_{ str.size() }
@@ -123,8 +124,12 @@ public:
 
 	size_t size() const { return header_.elemCount_; }
 	size_t capacity() const { return size(); }
+
+#pragma warning(push)
+#pragma warning(disable: 26446)
 	GameInfo* operator[](size_t i) { return &gameInfoArr_[i]; }
 	const GameInfo* operator[](size_t i) const { return &gameInfoArr_[i]; }
+#pragma warning(pop)
 
 	// Since this structure contains a VLA, none of these default methods make sense
 	Config() = delete;

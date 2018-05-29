@@ -1,9 +1,19 @@
 #include "NotifyIconWindow.h"
+#include "Win32Exception.h"
 
 #include <cassert>
+#include <filesystem>
+#include <gsl/gsl>
+#include <locale>
+#include <codecvt>
 
 #include "../res/strings.h"
 #include "../res/resource.h"
+
+namespace fs = std::filesystem;
+using namespace std::string_literals;
+
+constexpr size_t MaxLongPath = 32768;
 
 NotifyIconWindow::NotifyIconWindow(HINSTANCE instance) :
 	m_instance(instance),
@@ -32,8 +42,116 @@ LRESULT CALLBACK NotifyIconWindow::messageHandler(HWND hwnd, UINT message, WPARA
 		return DefWindowProcW(hwnd, message, wparam, lparam);
 	}
 
+    try
+    {
+	    return window->messageHandlerImpl(hwnd, message, wparam, lparam);
+    }
+    catch (const std::exception& ex)
+    {
+		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+		std::wstring message = converter.from_bytes(ex.what());
 
-	return window->messageHandlerImpl(hwnd, message, wparam, lparam);
+		MessageBoxW(nullptr, message.c_str(), APP_FRIENDLY_NAME, MB_OK | MB_ICONERROR);
+		return 0;
+    }
+}
+
+namespace
+{
+    fs::path procPath;
+    std::wstring procCmdLine;
+
+    std::pair<const fs::path&, const std::wstring&> GetProcPath()
+    {
+        if (procPath.empty())
+        {
+	        std::vector<wchar_t> path;
+	        path.resize(512);
+
+            auto err = ~ERROR_SUCCESS;
+	        while (err != ERROR_SUCCESS)
+	        {
+		        GetModuleFileNameW(nullptr, path.data(), gsl::narrow<DWORD>(path.size()));
+                err = GetLastError();
+                if (err == ERROR_INSUFFICIENT_BUFFER)
+                {
+			        if (path.size() == MaxLongPath) throw Win32Exception("Unable to get process path.");
+
+			        path.resize(std::min(path.size() * 2, MaxLongPath));
+                }
+                else if (err != ERROR_SUCCESS)
+                {
+			        throw Win32Exception(err, "Unable to get process path.");
+                }
+	        }
+
+            procPath = fs::canonical({path.data()});
+            procCmdLine = L'"' + procPath.wstring() + L'"';
+        }
+
+        return {procPath, procCmdLine};
+    }
+
+    const auto AutoRunKeyPath = LR"(Software\Microsoft\Windows\CurrentVersion\Run)";
+    const auto AutoRunValueName = L"net.austinwagner.blizzbar";
+
+    bool IsRegisteredForStartup()
+    {
+        const auto autoRunKey = RegistryKey::open(HKEY_CURRENT_USER, AutoRunKeyPath, KEY_QUERY_VALUE);
+        if (!autoRunKey) return false;
+
+        DWORD len;
+        if (RegGetValueW(*autoRunKey, nullptr, AutoRunValueName,
+            RRF_RT_REG_EXPAND_SZ | RRF_RT_REG_SZ, nullptr, nullptr, &len) != ERROR_SUCCESS)
+        {
+            return false;
+        }
+
+        std::vector<wchar_t> pathVec;
+        pathVec.resize(len / sizeof(wchar_t));
+
+        if (RegGetValueW(*autoRunKey, nullptr, AutoRunValueName,
+            RRF_RT_REG_EXPAND_SZ | RRF_RT_REG_SZ, nullptr,
+            reinterpret_cast<void*>(pathVec.data()), &len) != ERROR_SUCCESS)
+        {
+            return false;
+        }
+
+        const auto& currProcPath = std::get<0>(GetProcPath());
+
+        // With the pathVec[1] below, strips the quotes
+        pathVec[pathVec.size() - 3] = 0;
+
+        try
+        {
+            return fs::equivalent({&pathVec[1]}, currProcPath);
+        }
+        catch (const fs::filesystem_error&)
+        {
+            return false;
+        }
+    }
+
+    void RegisterForStartup()
+    {
+        const auto& cmdLine = std::get<1>(GetProcPath());
+        if (cmdLine.size() > 260)
+        {
+            throw std::runtime_error("Cannot set to run at startup; Windows places a length restriction on startup entries.\nMove this program to a location with a path of 258 characters or less (including the EXE file name).");
+        }
+
+        auto autoRunKey = RegistryKey::create(HKEY_CURRENT_USER, AutoRunKeyPath, nullptr, 0,
+            KEY_SET_VALUE | KEY_CREATE_SUB_KEY, nullptr, nullptr);
+        const auto res = RegSetKeyValueW(autoRunKey, nullptr, AutoRunValueName, REG_SZ,
+            reinterpret_cast<const void*>(cmdLine.data()), gsl::narrow<DWORD>(cmdLine.size() * sizeof(wchar_t)));
+        if (res != ERROR_SUCCESS) throw Win32Exception(res, "Unable to create startup entry.");
+    }
+
+    void UnregisterForStartup()
+    {
+        const auto res = RegDeleteKeyValueW(HKEY_CURRENT_USER, AutoRunKeyPath, AutoRunValueName);
+        if (res != ERROR_SUCCESS) throw Win32Exception(res, "Unable to remove startup entry.");
+    }
 }
 
 LRESULT NotifyIconWindow::messageHandlerImpl(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -48,6 +166,16 @@ LRESULT NotifyIconWindow::messageHandlerImpl(HWND hWnd, UINT message, WPARAM wPa
 		case IDM_EXIT:
 			PostQuitMessage(0);
 			break;
+        case IDM_RUNATSTARTUP:
+            if (IsRegisteredForStartup())
+            {
+                UnregisterForStartup();
+            }
+            else
+            {
+                RegisterForStartup();
+            }
+            break;
 		default:
 			return DefWindowProcW(hWnd, message, wParam, lParam);
 		}
@@ -69,6 +197,8 @@ LRESULT NotifyIconWindow::messageHandlerImpl(HWND hWnd, UINT message, WPARAM wPa
 				GetSystemMetrics(SM_MENUDROPALIGNMENT) == 0 ?
 				TPM_LEFTALIGN :
 				TPM_RIGHTALIGN;
+
+            CheckMenuItem(subMenu, IDM_RUNATSTARTUP, IsRegisteredForStartup() ? MF_CHECKED : MF_UNCHECKED);
 
 			// SetForegroundWindow and PostMessage are needed to prevent the context menu from getting stuck
 			SetForegroundWindow(m_window);

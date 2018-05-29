@@ -1,8 +1,3 @@
-// Pretty message boxes
-#pragma comment(linker,"\"/manifestdependency:type='win32' \
-name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
-processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-
 #include "../res/resource.h"
 #include "Handle.h"
 #include "NotifyIconWindow.h"
@@ -269,7 +264,7 @@ int CALLBACK WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int)
 
 		return 0;
 	}
-	catch (std::exception& ex)
+	catch (const std::exception& ex)
 	{
 		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 		std::wstring message = converter.from_bytes(ex.what());
