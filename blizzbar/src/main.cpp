@@ -3,7 +3,7 @@
 #include "NotifyIconWindow.h"
 #include "Win32Exception.h"
 #include "../res/strings.h"
-#include <blizzbar_common.h>
+#include <blizzbar/common.h>
 
 #include <gsl/gsl_util>
 

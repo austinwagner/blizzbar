@@ -116,7 +116,7 @@ public:
 	template <class Collection>
 	void copy_from(const Collection& c)
 	{
-		static_assert(std::is_same_v<Collection::value_type, GameInfo>);
+		static_assert(std::is_same_v<typename Collection::value_type, GameInfo>);
 
 		header_.elemCount_ = c.size();
 		std::memcpy(gameInfoArr_, c.data(), header_.size_bytes());

@@ -1,4 +1,4 @@
-#include <blizzbar_common.h>
+#include <blizzbar/common.h>
 #include "ConfigHelpers.h"
 #include "ThreadLocal.h"
 

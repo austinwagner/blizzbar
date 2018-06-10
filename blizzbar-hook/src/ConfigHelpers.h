@@ -1,5 +1,5 @@
 #pragma once
-#include <blizzbar_common.h>
+#include <blizzbar/common.h>
 
 class ConfigFileMapping
 {
