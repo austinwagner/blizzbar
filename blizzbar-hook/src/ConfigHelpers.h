@@ -1,42 +1,39 @@
 #pragma once
 #include <blizzbar/common.h>
 
-class ConfigFileMapping
-{
+class ConfigFileMapping {
 public:
-	ConfigFileMapping();
-	ConfigFileMapping(const wchar_t* name);
-	ConfigFileMapping(ConfigFileMapping&& other) noexcept;
-	ConfigFileMapping& operator=(ConfigFileMapping&& other) noexcept;
+    ConfigFileMapping();
+    ConfigFileMapping(const wchar_t* name);
+    ConfigFileMapping(ConfigFileMapping&& other) noexcept;
+    ConfigFileMapping& operator=(ConfigFileMapping&& other) noexcept;
 
-	~ConfigFileMapping();
+    ~ConfigFileMapping();
 
-	ConfigFileMapping(const ConfigFileMapping&) = delete;
-	ConfigFileMapping& operator=(const ConfigFileMapping&) = delete;
+    ConfigFileMapping(const ConfigFileMapping&) = delete;
+    ConfigFileMapping& operator=(const ConfigFileMapping&) = delete;
 
-	void* handle() const;
+    void* handle() const;
 
 private:
-	void* m_mmapHandle;
+    void* m_mmapHandle;
 };
 
-class ConfigFileView
-{
+class ConfigFileView {
 public:
-	ConfigFileView();
-	ConfigFileView(const ConfigFileMapping& mmap);
-	ConfigFileView(ConfigFileView&& other) noexcept;
-	ConfigFileView& operator=(ConfigFileView&& other) noexcept;
+    ConfigFileView();
+    ConfigFileView(const ConfigFileMapping& mmap);
+    ConfigFileView(ConfigFileView&& other) noexcept;
+    ConfigFileView& operator=(ConfigFileView&& other) noexcept;
 
-	~ConfigFileView();
+    ~ConfigFileView();
 
-	const Config* operator->() const;
-	const Config& operator*() const;
+    const Config* operator->() const;
+    const Config& operator*() const;
 
-	ConfigFileView(const ConfigFileView&) = delete;
-	ConfigFileView operator=(const ConfigFileView&) = delete;
+    ConfigFileView(const ConfigFileView&) = delete;
+    ConfigFileView operator=(const ConfigFileView&) = delete;
 
 private:
-
-	Config* m_view;
+    Config* m_view;
 };

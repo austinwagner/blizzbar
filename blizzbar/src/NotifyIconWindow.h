@@ -1,25 +1,26 @@
 #pragma once
-#include <Windows.h>
 #include "Handle.h"
-#include "WindowClass.h"
 #include "NotifyIcon.h"
+#include "WindowClass.h"
 
-class NotifyIconWindow
-{
+#include <Windows.h>
+
+class NotifyIconWindow {
 public:
-	explicit NotifyIconWindow(HINSTANCE instance);
+    explicit NotifyIconWindow(HINSTANCE instance);
 
-	void runMessageLoop();
+    void runMessageLoop();
 
 private:
-	static LRESULT CALLBACK messageHandler(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
-	LRESULT messageHandlerImpl(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
+    static LRESULT CALLBACK messageHandler(
+        HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
+    LRESULT messageHandlerImpl(
+        HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 
-	HINSTANCE m_instance;
-	WindowClass m_windowClass;
-	Window m_window;
-	NotifyIcon m_notifyIcon;
+    HINSTANCE m_instance;
+    WindowClass m_windowClass;
+    Window m_window;
+    NotifyIcon m_notifyIcon;
 
-	static const UINT CallbackMessage = WM_USER + 1;
+    static const UINT CallbackMessage = WM_USER + 1;
 };
-

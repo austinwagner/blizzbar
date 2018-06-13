@@ -17,7 +17,7 @@ AllowShortIfStatementsOnASingleLine: true
 # AlwaysBreakAfterDefinitionReturnType: None
 # AlwaysBreakAfterReturnType: None
 # AlwaysBreakBeforeMultilineStrings: false
-# AlwaysBreakTemplateDeclarations: false
+AlwaysBreakTemplateDeclarations: true
 # BinPackArguments: true
 # BinPackParameters: true
 BraceWrapping:   
@@ -29,7 +29,7 @@ BraceWrapping:
   AfterObjCDeclaration: false
   AfterStruct:     false
   AfterUnion:      false
-  AfterExternBlock: false
+#  AfterExternBlock: false
   BeforeCatch:     false
   BeforeElse:      false
   IndentBraces:    false
@@ -44,7 +44,7 @@ BraceWrapping:
 # BreakConstructorInitializers: BeforeComma
 # BreakAfterJavaFieldAnnotations: false
 # BreakStringLiterals: true
-ColumnLimit:     120
+ColumnLimit:     80
 # CommentPragmas:  '^ IWYU pragma:'
 CompactNamespaces: true
 # ConstructorInitializerAllOnOneLineOrOnePerLine: false
@@ -63,10 +63,14 @@ CompactNamespaces: true
 IncludeCategories:
   - Regex:           '^"'
     Priority:        1
-  - Regex:           '^<'
+  - Regex:           '^<Windows.h>'
     Priority:        2
-  - Regex:           '.*'
+  - Regex:           '^<.*\.h(pp)?>'
     Priority:        3
+  - Regex:           '^<'
+    Priority:        4
+  - Regex:           '.*'
+    Priority:        5
 IncludeIsMainRegex: '$'
 # IndentCaseLabels: false
 # IndentPPDirectives: None

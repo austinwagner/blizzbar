@@ -3,21 +3,20 @@
 
 #include <string>
 
-class WindowClass
-{
+class WindowClass {
 public:
-	WindowClass(HINSTANCE inst, WNDPROC wndProc, std::wstring name);
-	~WindowClass();
+    WindowClass(HINSTANCE inst, WNDPROC wndProc, std::wstring name);
+    ~WindowClass();
 
-	std::wstring className() const;
+    std::wstring className() const;
 
     WindowClass(WindowClass&& other) noexcept;
     WindowClass& operator=(WindowClass&& other) noexcept;
 
-	WindowClass(const WindowClass&) = delete;
-	WindowClass& operator=(const WindowClass&) = delete;
+    WindowClass(const WindowClass&) = delete;
+    WindowClass& operator=(const WindowClass&) = delete;
 
 private:
-	std::wstring m_name;
-	WNDCLASSW m_class{};
+    std::wstring m_name;
+    WNDCLASSW m_class{};
 };
